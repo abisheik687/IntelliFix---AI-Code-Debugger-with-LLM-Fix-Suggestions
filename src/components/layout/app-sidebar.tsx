@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -84,7 +85,7 @@ export function AppSidebar() {
                 <SidebarMenuSub>
                   {item.subItems?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.href}>
-                      <Link href={subItem.href} passHref legacyBehavior>
+                      <Link href={subItem.href}>
                         <SidebarMenuSubButton
                           isActive={pathname === subItem.href}
                           className={cn(subItem.disabled && "text-muted-foreground cursor-not-allowed opacity-50")}
@@ -102,7 +103,7 @@ export function AppSidebar() {
               </SidebarGroup>
             ) : (
               <SidebarMenuItem key={item.href}>
-                <Link href={item.href} passHref legacyBehavior>
+                <Link href={item.href}>
                   <SidebarMenuButton
                     isActive={pathname === item.href}
                     tooltip={{ children: item.label, side: "right", align: "center" }}
