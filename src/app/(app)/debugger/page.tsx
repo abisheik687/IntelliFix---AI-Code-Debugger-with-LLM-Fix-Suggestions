@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Wand2, Lightbulb, GitDiff, Undo, CheckCircle, Copy, AlertCircle } from "lucide-react";
+import { Upload, Wand2, Lightbulb, CheckCircle, Copy, AlertCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { explainError as genExplainError, ExplainErrorOutput } from '@/ai/flows/explain-error';
@@ -24,8 +24,40 @@ const languages = [
   { value: "cpp", label: "C++" },
 ];
 
+interface RecentError {
+  id: string;
+  description: string;
+  status: string;
+  severity: 'High' | 'Medium' | 'Low';
+  date: string;
+}
+
+const MAX_RECENT_ERRORS = 10;
+const LOCAL_STORAGE_KEY = 'intellifix-recent-errors';
+
+const addErrorToHistory = (newErrorEntry: Omit<RecentError, 'id' | 'date'>) => {
+  try {
+    const storedErrors = localStorage.getItem(LOCAL_STORAGE_KEY);
+    let recentErrors: RecentError[] = storedErrors ? JSON.parse(storedErrors) : [];
+    
+    const errorWithDetails: RecentError = {
+      ...newErrorEntry,
+      id: `ERR-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+    };
+
+    recentErrors.unshift(errorWithDetails);
+    recentErrors = recentErrors.slice(0, MAX_RECENT_ERRORS);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(recentErrors));
+  } catch (error) {
+    console.error("Failed to save error to history:", error);
+  }
+};
+
+
 export default function DebuggerPage() {
   const [code, setCode] = useState("");
+  const [originalCode, setOriginalCode] = useState("");
   const [errorTrace, setErrorTrace] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState(languages[0].value);
   const [explanation, setExplanation] = useState<ExplainErrorOutput | null>(null);
@@ -44,9 +76,19 @@ export default function DebuggerPage() {
     try {
       const result = await genExplainError({ codeSnippet: code, errorTrace });
       setExplanation(result);
+      addErrorToHistory({
+        description: errorTrace.substring(0, 100) + (errorTrace.length > 100 ? "..." : ""),
+        status: "Explained",
+        severity: "Medium", // Default severity
+      });
     } catch (error) {
       console.error("Error explaining:", error);
       toast({ title: "AI Error", description: "Could not get explanation from AI.", variant: "destructive" });
+       addErrorToHistory({
+        description: errorTrace.substring(0, 100) + (errorTrace.length > 100 ? "..." : ""),
+        status: "Explain Failed",
+        severity: "Medium",
+      });
     } finally {
       setIsLoadingExplanation(false);
     }
@@ -59,12 +101,23 @@ export default function DebuggerPage() {
     }
     setIsLoadingFix(true);
     setSuggestedFix(null);
+    setOriginalCode(code); // Save original code before suggesting a fix
     try {
       const result = await genSuggestFix({ code, error: errorTrace, language: selectedLanguage });
       setSuggestedFix(result);
+      addErrorToHistory({
+        description: errorTrace.substring(0, 100) + (errorTrace.length > 100 ? "..." : ""),
+        status: "Fix Suggested",
+        severity: "Medium", // Default severity
+      });
     } catch (error) {
       console.error("Error suggesting fix:", error);
       toast({ title: "AI Error", description: "Could not get fix suggestion from AI.", variant: "destructive" });
+      addErrorToHistory({
+        description: errorTrace.substring(0, 100) + (errorTrace.length > 100 ? "..." : ""),
+        status: "Suggest Failed",
+        severity: "Medium",
+      });
     } finally {
       setIsLoadingFix(false);
     }
@@ -74,7 +127,18 @@ export default function DebuggerPage() {
     if (suggestedFix?.fixedCode) {
       setCode(suggestedFix.fixedCode);
       toast({ title: "Fix Applied", description: "The suggested fix has been applied to your code.",variant: "default" });
+      addErrorToHistory({
+        description: errorTrace.substring(0, 100) + (errorTrace.length > 100 ? "..." : ""),
+        status: "Fix Applied",
+        severity: "Medium",
+      });
     }
+  };
+
+  const handleRollback = () => {
+    setCode(originalCode);
+    setSuggestedFix(null); // Clear the suggested fix
+    toast({title: "Rollback Successful", description: "Original code has been restored."})
   };
   
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +146,9 @@ export default function DebuggerPage() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setCode(e.target?.result as string);
+        const fileContent = e.target?.result as string;
+        setCode(fileContent);
+        setOriginalCode(fileContent); // Also set original code on file upload
         if (file.name.endsWith(".py")) setSelectedLanguage("python");
         else if (file.name.endsWith(".js")) setSelectedLanguage("javascript");
         else if (file.name.endsWith(".java")) setSelectedLanguage("java");
@@ -226,7 +292,15 @@ export default function DebuggerPage() {
                   {suggestedFix ? (
                     <div className="space-y-3">
                       <div>
-                        <h4 className="font-semibold text-primary">Suggested Code:</h4>
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-semibold text-primary">Suggested Code:</h4>
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            navigator.clipboard.writeText(suggestedFix.fixedCode);
+                            toast({title: "Copied!", description: "Suggested code copied to clipboard."});
+                          }}>
+                            <Copy className="mr-2 h-3 w-3" /> Copy
+                          </Button>
+                        </div>
                         <pre className="font-code text-xs bg-background p-2 rounded-md overflow-x-auto whitespace-pre-wrap">{suggestedFix.fixedCode}</pre>
                       </div>
                        <div>
@@ -237,11 +311,8 @@ export default function DebuggerPage() {
                         <Button onClick={handleApplyFix} size="sm" disabled={!suggestedFix.fixedCode}>
                           <CheckCircle className="mr-2 h-4 w-4" /> Apply Fix
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => {
-                            setCode(code); 
-                            toast({title: "Rollback (Mock)", description: "Original code restored (mock action)."})
-                        }}>
-                          <Undo className="mr-2 h-4 w-4" /> Rollback
+                        <Button variant="outline" size="sm" onClick={handleRollback}>
+                          Rollback
                         </Button>
                       </div>
                     </div>
@@ -260,3 +331,4 @@ export default function DebuggerPage() {
     </div>
   );
 }
+

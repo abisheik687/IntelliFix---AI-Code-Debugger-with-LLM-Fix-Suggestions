@@ -30,20 +30,42 @@ const pieChartData = [
   { name: 'Semantic Errors', value: 200, fill: "hsl(var(--chart-4))" },
 ];
 
-const recentErrors = [
-  { id: "ERR001", description: "NullPointerException in UserServi...", status: "Open", severity: "High", date: "2024-07-28" },
-  { id: "ERR002", description: "TypeError: 'NoneType' object is not iterable", status: "Fixed", severity: "Medium", date: "2024-07-27" },
-  { id: "ERR003", description: "IndexOutOfBoundsException: Index 10 out of bounds for length 5", status: "Open", severity: "High", date: "2024-07-28" },
-  { id: "ERR004", description: "Network Error: Failed to fetch resource", status: "Investigating", severity: "Low", date: "2024-07-26" },
-];
+interface RecentError {
+  id: string;
+  description: string;
+  status: string;
+  severity: 'High' | 'Medium' | 'Low';
+  date: string;
+}
+
+const LOCAL_STORAGE_KEY_DASHBOARD = 'intellifix-recent-errors';
+
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [clientUser, setClientUser] = useState<typeof user>(null);
+  const [recentErrors, setRecentErrors] = useState<RecentError[]>([]);
 
   useEffect(() => {
     setClientUser(user);
   }, [user]);
+
+  useEffect(() => {
+    try {
+      const storedErrors = localStorage.getItem(LOCAL_STORAGE_KEY_DASHBOARD);
+      if (storedErrors) {
+        const parsedErrors: RecentError[] = JSON.parse(storedErrors);
+        // Ensure data is sorted by date, most recent first, if not already.
+        // Assuming unshift in debugger page handles this, but good to be safe.
+        // parsedErrors.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setRecentErrors(parsedErrors);
+      }
+    } catch (error) {
+      console.error("Failed to load recent errors from localStorage:", error);
+      setRecentErrors([]); // Fallback to empty list on error
+    }
+  }, []);
+
 
   return (
     <div className="space-y-6">
@@ -147,40 +169,47 @@ export default function DashboardPage() {
           <CardDescription>A log of the most recent errors processed.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Error ID</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Severity</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentErrors.map((error) => (
-                <TableRow key={error.id} className="hover:bg-muted/50">
-                  <TableCell className="font-medium">{error.id}</TableCell>
-                  <TableCell>{error.description}</TableCell>
-                  <TableCell>
-                     <span className={`px-2 py-1 text-xs rounded-full ${
-                        error.status === 'Open' ? 'bg-destructive/20 text-destructive' :
-                        error.status === 'Fixed' ? 'bg-green-500/20 text-green-700 dark:text-green-400' :
-                        'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
-                      }`}>
-                      {error.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className={error.severity === "High" ? "text-destructive" : error.severity === "Medium" ? "text-yellow-600 dark:text-yellow-500" : ""}>
-                    {error.severity}
-                  </TableCell>
-                  <TableCell>{error.date}</TableCell>
+          {recentErrors.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Error ID</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Severity</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {recentErrors.map((error) => (
+                  <TableRow key={error.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">{error.id.substring(0,10)}...</TableCell>
+                    <TableCell>{error.description}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                          error.status.includes('Failed') ? 'bg-destructive/20 text-destructive' :
+                          error.status === 'Fix Applied' ? 'bg-green-500/20 text-green-700 dark:text-green-400' :
+                          error.status === 'Fix Suggested' ? 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400' :
+                          error.status === 'Explained' ? 'bg-sky-500/20 text-sky-700 dark:text-sky-400' :
+                          'bg-muted' // default or other statuses
+                        }`}>
+                        {error.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className={error.severity === "High" ? "text-destructive" : error.severity === "Medium" ? "text-yellow-600 dark:text-yellow-500" : ""}>
+                      {error.severity}
+                    </TableCell>
+                    <TableCell>{error.date}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-muted-foreground text-center py-4">No recent errors processed. Use the Debugger to analyze errors.</p>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
+
