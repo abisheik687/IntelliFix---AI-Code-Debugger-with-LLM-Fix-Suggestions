@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { explainError as genExplainError, ExplainErrorOutput } from '@/ai/flows/explain-error';
 import { suggestFix as genSuggestFix, SuggestFixOutput } from '@/ai/flows/suggest-fix';
+import { detectErrorIntent, type IntentDetectionOutput } from '@/ai/flows/intent-detection';
 import { Skeleton } from "@/components/ui/skeleton";
 
 const languages = [
@@ -29,13 +30,15 @@ interface RecentError {
   description: string;
   status: string;
   severity: 'High' | 'Medium' | 'Low';
-  date: string;
+  date: string; // YYYY-MM-DD
+  type?: string; // e.g., 'Syntax', 'Logic'
+  codeSnippet?: string; // Store the code for potential re-analysis or context
 }
 
-const MAX_RECENT_ERRORS = 10;
-const LOCAL_STORAGE_KEY = 'intellifix-recent-errors';
+const MAX_RECENT_ERRORS = 20; // Increased limit for more data
+const LOCAL_STORAGE_KEY = 'intellifix-recent-errors'; // Standardized key
 
-const addErrorToHistory = (newErrorEntry: Omit<RecentError, 'id' | 'date'>) => {
+const addErrorToHistory = (newErrorEntry: Omit<RecentError, 'id' | 'date'> & { type?: string }) => {
   try {
     const storedErrors = localStorage.getItem(LOCAL_STORAGE_KEY);
     let recentErrors: RecentError[] = storedErrors ? JSON.parse(storedErrors) : [];
@@ -43,7 +46,7 @@ const addErrorToHistory = (newErrorEntry: Omit<RecentError, 'id' | 'date'>) => {
     const errorWithDetails: RecentError = {
       ...newErrorEntry,
       id: `ERR-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+      date: new Date().toISOString().split('T')[0],
     };
 
     recentErrors.unshift(errorWithDetails);
@@ -66,6 +69,26 @@ export default function DebuggerPage() {
   const [isLoadingFix, setIsLoadingFix] = useState(false);
   const { toast } = useToast();
 
+  const processAndLogError = async (status: string, currentCode: string, currentErrorTrace: string) => {
+    let detectedIntent: string | undefined = undefined;
+    if (currentCode && currentErrorTrace) {
+      try {
+        const intentResult = await detectErrorIntent({ codeSnippet: currentCode, errorTrace: currentErrorTrace });
+        detectedIntent = intentResult.intent;
+      } catch (intentError) {
+        console.error("Error detecting intent:", intentError);
+        // Do not toast here, as it might be too noisy. Log for dev purposes.
+      }
+    }
+    addErrorToHistory({
+      description: currentErrorTrace.substring(0, 100) + (currentErrorTrace.length > 100 ? "..." : ""),
+      status: status,
+      severity: "Medium", // Default severity, could be made dynamic later
+      type: detectedIntent,
+      codeSnippet: currentCode.substring(0, 200) + (currentCode.length > 200 ? "..." : ""),
+    });
+  };
+
   const handleExplainError = async () => {
     if (!code || !errorTrace) {
       toast({ title: "Missing Input", description: "Please provide both code and error trace.", variant: "destructive" });
@@ -73,22 +96,16 @@ export default function DebuggerPage() {
     }
     setIsLoadingExplanation(true);
     setExplanation(null);
+    const currentCode = code;
+    const currentErrorTrace = errorTrace;
     try {
-      const result = await genExplainError({ codeSnippet: code, errorTrace });
+      const result = await genExplainError({ codeSnippet: currentCode, errorTrace: currentErrorTrace });
       setExplanation(result);
-      addErrorToHistory({
-        description: errorTrace.substring(0, 100) + (errorTrace.length > 100 ? "..." : ""),
-        status: "Explained",
-        severity: "Medium", // Default severity
-      });
+      await processAndLogError("Explained", currentCode, currentErrorTrace);
     } catch (error) {
       console.error("Error explaining:", error);
       toast({ title: "AI Error", description: "Could not get explanation from AI.", variant: "destructive" });
-       addErrorToHistory({
-        description: errorTrace.substring(0, 100) + (errorTrace.length > 100 ? "..." : ""),
-        status: "Explain Failed",
-        severity: "Medium",
-      });
+      await processAndLogError("Explain Failed", currentCode, currentErrorTrace);
     } finally {
       setIsLoadingExplanation(false);
     }
@@ -101,43 +118,36 @@ export default function DebuggerPage() {
     }
     setIsLoadingFix(true);
     setSuggestedFix(null);
-    setOriginalCode(code); // Save original code before suggesting a fix
+    setOriginalCode(code); 
+    const currentCode = code;
+    const currentErrorTrace = errorTrace;
     try {
-      const result = await genSuggestFix({ code, error: errorTrace, language: selectedLanguage });
+      const result = await genSuggestFix({ code: currentCode, error: currentErrorTrace, language: selectedLanguage });
       setSuggestedFix(result);
-      addErrorToHistory({
-        description: errorTrace.substring(0, 100) + (errorTrace.length > 100 ? "..." : ""),
-        status: "Fix Suggested",
-        severity: "Medium", // Default severity
-      });
+      await processAndLogError("Fix Suggested", currentCode, currentErrorTrace);
     } catch (error) {
       console.error("Error suggesting fix:", error);
       toast({ title: "AI Error", description: "Could not get fix suggestion from AI.", variant: "destructive" });
-      addErrorToHistory({
-        description: errorTrace.substring(0, 100) + (errorTrace.length > 100 ? "..." : ""),
-        status: "Suggest Failed",
-        severity: "Medium",
-      });
+      await processAndLogError("Suggest Failed", currentCode, currentErrorTrace);
     } finally {
       setIsLoadingFix(false);
     }
   };
 
-  const handleApplyFix = () => {
+  const handleApplyFix = async () => {
     if (suggestedFix?.fixedCode) {
+      const currentCodeBeforeFix = code;
+      const currentErrorTrace = errorTrace;
       setCode(suggestedFix.fixedCode);
       toast({ title: "Fix Applied", description: "The suggested fix has been applied to your code.",variant: "default" });
-      addErrorToHistory({
-        description: errorTrace.substring(0, 100) + (errorTrace.length > 100 ? "..." : ""),
-        status: "Fix Applied",
-        severity: "Medium",
-      });
+      // Log after applying the fix, using the original code and error trace for context
+      await processAndLogError("Fix Applied", originalCode || currentCodeBeforeFix, currentErrorTrace);
     }
   };
 
   const handleRollback = () => {
     setCode(originalCode);
-    setSuggestedFix(null); // Clear the suggested fix
+    setSuggestedFix(null); 
     toast({title: "Rollback Successful", description: "Original code has been restored."})
   };
   
@@ -148,7 +158,7 @@ export default function DebuggerPage() {
       reader.onload = (e) => {
         const fileContent = e.target?.result as string;
         setCode(fileContent);
-        setOriginalCode(fileContent); // Also set original code on file upload
+        setOriginalCode(fileContent); 
         if (file.name.endsWith(".py")) setSelectedLanguage("python");
         else if (file.name.endsWith(".js")) setSelectedLanguage("javascript");
         else if (file.name.endsWith(".java")) setSelectedLanguage("java");
@@ -163,7 +173,6 @@ export default function DebuggerPage() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-      {/* Code and Error Input Column */}
       <div className="lg:col-span-2 space-y-6 flex flex-col">
         <Card className="flex-grow flex flex-col shadow-lg">
           <CardHeader>
@@ -211,7 +220,6 @@ export default function DebuggerPage() {
         </Card>
       </div>
 
-      {/* AI Actions and Output Column */}
       <div className="space-y-6 flex flex-col">
         <Card className="shadow-lg">
           <CardHeader>
