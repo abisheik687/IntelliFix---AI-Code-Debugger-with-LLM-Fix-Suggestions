@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -59,7 +60,6 @@ export default function DebuggerPage() {
     setIsLoadingFix(true);
     setSuggestedFix(null);
     try {
-      // Simulate language detection or use selectedLanguage
       const result = await genSuggestFix({ code, error: errorTrace, language: selectedLanguage });
       setSuggestedFix(result);
     } catch (error) {
@@ -71,12 +71,8 @@ export default function DebuggerPage() {
   };
 
   const handleApplyFix = () => {
-    if (suggestedFix?.diff) { // Assuming diff contains the full fixed code for simplicity
-      // A real implementation would parse the diff and apply it.
-      // For this simulation, we'll replace the code if fixedCode is available, or use a placeholder logic.
-      // Let's assume the diff is just the new code for now.
-      const fixedCode = suggestedFix.diff.split('\n').filter(line => !line.startsWith('-') && !line.startsWith('---')).map(line => line.startsWith('+') ? line.substring(1) : line).join('\n');
-      setCode(fixedCode);
+    if (suggestedFix?.fixedCode) {
+      setCode(suggestedFix.fixedCode);
       toast({ title: "Fix Applied", description: "The suggested fix has been applied to your code.",variant: "default" });
     }
   };
@@ -87,11 +83,12 @@ export default function DebuggerPage() {
       const reader = new FileReader();
       reader.onload = (e) => {
         setCode(e.target?.result as string);
-        // Auto-detect language (simplified)
         if (file.name.endsWith(".py")) setSelectedLanguage("python");
         else if (file.name.endsWith(".js")) setSelectedLanguage("javascript");
         else if (file.name.endsWith(".java")) setSelectedLanguage("java");
-        // ... and so on
+        else if (file.name.endsWith(".ts")) setSelectedLanguage("typescript");
+        else if (file.name.endsWith(".go")) setSelectedLanguage("go");
+        else if (file.name.endsWith(".cpp")) setSelectedLanguage("cpp");
       };
       reader.readAsText(file);
     }
@@ -229,19 +226,19 @@ export default function DebuggerPage() {
                   {suggestedFix ? (
                     <div className="space-y-3">
                       <div>
-                        <h4 className="font-semibold text-primary">Suggested Diff:</h4>
-                        <pre className="font-code text-xs bg-background p-2 rounded-md overflow-x-auto whitespace-pre-wrap">{suggestedFix.diff}</pre>
+                        <h4 className="font-semibold text-primary">Suggested Code:</h4>
+                        <pre className="font-code text-xs bg-background p-2 rounded-md overflow-x-auto whitespace-pre-wrap">{suggestedFix.fixedCode}</pre>
                       </div>
                        <div>
                         <h4 className="font-semibold text-primary">Explanation of Fix:</h4>
                         <p className="text-sm">{suggestedFix.explanation}</p>
                       </div>
                       <div className="flex gap-2 mt-4">
-                        <Button onClick={handleApplyFix} size="sm">
+                        <Button onClick={handleApplyFix} size="sm" disabled={!suggestedFix.fixedCode}>
                           <CheckCircle className="mr-2 h-4 w-4" /> Apply Fix
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => {
-                            setCode(code); /* This is a mock rollback */
+                            setCode(code); 
                             toast({title: "Rollback (Mock)", description: "Original code restored (mock action)."})
                         }}>
                           <Undo className="mr-2 h-4 w-4" /> Rollback

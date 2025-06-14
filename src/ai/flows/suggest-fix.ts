@@ -4,7 +4,7 @@
 /**
  * @fileOverview AI-powered code fix suggestion flow.
  *
- * - suggestFix - A function that suggests automated fixes for code errors, displayed as inline diffs.
+ * - suggestFix - A function that suggests automated fixes for code errors, providing the full fixed code.
  * - SuggestFixInput - The input type for the suggestFix function.
  * - SuggestFixOutput - The return type for the suggestFix function.
  */
@@ -20,7 +20,7 @@ const SuggestFixInputSchema = z.object({
 export type SuggestFixInput = z.infer<typeof SuggestFixInputSchema>;
 
 const SuggestFixOutputSchema = z.object({
-  diff: z.string().describe('The inline diff of the suggested fix.'),
+  fixedCode: z.string().describe('The complete fixed code snippet.'),
   explanation: z.string().describe('The explanation of the fix.'),
 });
 export type SuggestFixOutput = z.infer<typeof SuggestFixOutputSchema>;
@@ -34,19 +34,20 @@ const prompt = ai.definePrompt({
   input: {schema: SuggestFixInputSchema},
   output: {schema: SuggestFixOutputSchema},
   prompt: `You are an AI code assistant that suggests fixes for code errors.
+Given the following code snippet, programming language, and error message, your task is to provide the complete corrected code and an explanation for the fix.
 
-  Given the following code and error message, generate an inline diff that fixes the error.
-  Also, provide a brief explanation of the fix.
+Language: {{{language}}}
 
-  Language: {{{language}}}
-  Code:
-  \`\`\`{{{language}}}
-  {{{code}}}
-  \`\`\`
-  Error:
-  {{{error}}}
-  Diff:
-  `,
+Original Code:
+\`\`\`{{{language}}}
+{{{code}}}
+\`\`\`
+
+Error Message:
+{{{error}}}
+
+Please provide the full, corrected code block for the 'fixedCode' field and a concise explanation of the changes made for the 'explanation' field.
+`,
   config: {
     safetySettings: [
       {
