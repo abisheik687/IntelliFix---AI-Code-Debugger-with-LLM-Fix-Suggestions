@@ -48,6 +48,7 @@ export default function DashboardPage() {
   const [recentErrors, setRecentErrors] = useState<RecentError[]>([]);
   const [monthlyErrorData, setMonthlyErrorData] = useState<MonthlyErrorData[]>([]);
   const [errorTypeDistributionData, setErrorTypeDistributionData] = useState<ErrorTypeData[]>([]);
+  const [totalErrorsFixed, setTotalErrorsFixed] = useState(0);
 
   useEffect(() => {
     setClientUser(user);
@@ -59,6 +60,10 @@ export default function DashboardPage() {
       if (storedErrors) {
         const parsedErrors: RecentError[] = JSON.parse(storedErrors);
         setRecentErrors(parsedErrors);
+
+        // Calculate total errors fixed
+        const fixedCount = parsedErrors.filter(error => error.status === 'Fix Applied').length;
+        setTotalErrorsFixed(fixedCount);
 
         // Process for Error Trends (Monthly)
         const monthlyCounts: { [key: string]: number } = {};
@@ -94,6 +99,7 @@ export default function DashboardPage() {
       setRecentErrors([]); 
       setMonthlyErrorData([]);
       setErrorTypeDistributionData([]);
+      setTotalErrorsFixed(0);
     }
   }, []);
 
@@ -114,15 +120,14 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* These cards are still static for now, can be made dynamic in a future step */}
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Errors Fixed</CardTitle>
             <Bug className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">+10.2% from last month</p>
+            <div className="text-3xl font-bold">{totalErrorsFixed}</div>
+            <p className="text-xs text-muted-foreground">Number of fixes applied by IntelliFix.</p>
           </CardContent>
         </Card>
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
@@ -131,8 +136,8 @@ export default function DashboardPage() {
             <Activity className="h-5 w-5 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">92.5%</div>
-            <p className="text-xs text-muted-foreground">+2.1% from last month</p>
+            <div className="text-3xl font-bold">N/A</div>
+            <p className="text-xs text-muted-foreground">Accuracy data not yet available.</p>
           </CardContent>
         </Card>
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
@@ -141,8 +146,8 @@ export default function DashboardPage() {
             <AlertTriangle className="h-5 w-5 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">Needs immediate attention</p>
+            <div className="text-3xl font-bold">N/A</div>
+            <p className="text-xs text-muted-foreground">Criticality data not yet available.</p>
           </CardContent>
         </Card>
       </div>
