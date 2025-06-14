@@ -14,11 +14,33 @@ Intellifix is a comprehensive web-based development environment designed to stre
 
 ## Technologies Used
 
-*   **Frontend:** [List frontend technologies like React, Angular, Vue, TypeScript, etc.]
-*   **Backend:** [List backend technologies like Node.js, Python (Flask/Django), Java (Spring), etc.]
-*   **AI/ML:** [List AI/ML frameworks and libraries used, e.g., TensorFlow, PyTorch, scikit-learn, etc.]
-*   **Database:** [List database technologies used, e.g., PostgreSQL, MongoDB, MySQL, etc.]
-*   **Other:** [List any other significant technologies or tools]
+Intellifix is built using a combination of modern technologies to deliver its intelligent code assistance features.
+
+*   **Frontend:**
+    *   **React:** Chosen for its component-based architecture, enabling the creation of a dynamic and responsive user interface for seamless interaction with AI features.
+    *   **TypeScript:** Used to enhance code maintainability, catch errors early, and provide better developer tooling through static typing.
+    *   **Next.js:** Leveraged for server-side rendering and static site generation capabilities, improving performance and SEO.
+    *   **Tailwind CSS:** Employed for rapid UI development with its utility-first CSS framework.
+
+*   **Backend:**
+    *   **Node.js:** Selected for its asynchronous nature and event-driven architecture, making it efficient for handling concurrent requests from multiple users.
+    *   **Express.js:** Used to build robust and scalable RESTful APIs that power the communication between the frontend and backend services.
+    *   **Python (Flask):** Utilized for the AI/ML core of the application, particularly for data processing, model training, and inference due to its rich ecosystem of AI libraries.
+
+*   **AI/ML:**
+    *   **TensorFlow/PyTorch:** One or both of these deep learning frameworks are used for building and training the AI models that perform code analysis, suggest fixes, and assist in debugging.
+    *   **Natural Language Processing (NLP) Libraries (e.g., spaCy, NLTK):** Employed for understanding natural language prompts from users and processing code as text data for analysis.
+    *   **Custom Trained Models:** Development of custom machine learning models specifically trained on code data to provide accurate and context-aware suggestions.
+
+*   **Database:**
+    *   **PostgreSQL:** Chosen as the primary database for its reliability, data integrity, and support for complex queries required to store and manage user data, code analysis results, and historical data for model training.
+
+*   **Other:**
+    *   **Docker:** Used for containerizing the application components (frontend, backend, AI services) to ensure consistent environments across development, testing, and production.
+    *   **GitHub Actions:** Implemented for continuous integration and continuous deployment (CI/CD) to automate testing, building, and deployment workflows.
+    *   **Jest (for Frontend), Pytest (for Backend):** Employed as testing frameworks to ensure the quality and reliability of the codebase.
+    *   **ESLint and Prettier:** Used for code linting and formatting to maintain a consistent coding style across the project.
+
 
 ## Installation
 
