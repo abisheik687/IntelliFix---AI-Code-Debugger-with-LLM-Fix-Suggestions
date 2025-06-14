@@ -87,14 +87,17 @@ export function AppSidebar() {
                     <SidebarMenuSubItem key={subItem.href}>
                       <Link href={subItem.href}>
                         <SidebarMenuSubButton
+                          asChild
                           isActive={pathname === subItem.href}
                           className={cn(subItem.disabled && "text-muted-foreground cursor-not-allowed opacity-50")}
                           aria-disabled={subItem.disabled}
                           tabIndex={subItem.disabled ? -1 : undefined}
                           onClick={(e) => subItem.disabled && e.preventDefault()}
                         >
-                          <subItem.icon className="mr-2" />
-                          <span>{subItem.label}</span>
+                          <>
+                            <subItem.icon className="mr-2" />
+                            <span>{subItem.label}</span>
+                          </>
                         </SidebarMenuSubButton>
                       </Link>
                     </SidebarMenuSubItem>
