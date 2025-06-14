@@ -3,6 +3,15 @@
 
 Intellifix is a comprehensive web-based development environment designed to streamline the coding and debugging process. It offers a suite of tools powered by Artificial Intelligence to assist developers in various tasks, from generating code and explaining errors to suggesting fixes and facilitating collaborative coding sessions.
 
+## 🚀 Live Demo
+
+Experience IntelliFix in action:
+
+👉 [Visit IntelliFix Dashboard](https://intelli-fix-ai-code-debugger-with-l.vercel.app/dashboard)
+
+> 🧠 Try uploading buggy code and get instant AI-driven fixes, explanations, diffs, and testing support!
+
+
 ## Features
 
 *   **AI-Powered Code Fixing:** Automatically identify and suggest fixes for common coding errors and style violations.
