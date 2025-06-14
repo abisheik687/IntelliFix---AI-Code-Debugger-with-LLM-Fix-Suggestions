@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -39,13 +40,14 @@ const prompt = ai.definePrompt({
 
   Language: {{{language}}}
   Code:
-  ```{{{language}}}
+  \`\`\`{{{language}}}
   {{{code}}}
-  ```
+  \`\`\`
   Error:
   {{{error}}}
   Diff:
-  `,config: {
+  `,
+  config: {
     safetySettings: [
       {
         category: 'HARM_CATEGORY_HATE_SPEECH',

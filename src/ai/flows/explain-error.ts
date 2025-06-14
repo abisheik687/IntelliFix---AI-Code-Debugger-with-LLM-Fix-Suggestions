@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -43,14 +44,14 @@ const prompt = ai.definePrompt({
   Given the following code snippet and error trace, explain the error, its root cause, and provide links to relevant documentation.
 
   Code Snippet:
-  ```
+  \`\`\`
   {{{codeSnippet}}}
-  ```
+  \`\`\`
 
   Error Trace:
-  ```
+  \`\`\`
   {{{errorTrace}}}
-  ````,
+  \`\`\``
 });
 
 const explainErrorFlow = ai.defineFlow(
