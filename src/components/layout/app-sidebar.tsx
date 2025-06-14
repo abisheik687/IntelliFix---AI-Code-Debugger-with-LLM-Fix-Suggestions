@@ -94,10 +94,11 @@ export function AppSidebar() {
                           tabIndex={subItem.disabled ? -1 : undefined}
                           onClick={(e) => subItem.disabled && e.preventDefault()}
                         >
-                          <>
+                          {/* Ensure this is a single element that can accept props */}
+                          <span> 
                             <subItem.icon className="mr-2" />
                             <span>{subItem.label}</span>
-                          </>
+                          </span>
                         </SidebarMenuSubButton>
                       </Link>
                     </SidebarMenuSubItem>
@@ -136,3 +137,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
