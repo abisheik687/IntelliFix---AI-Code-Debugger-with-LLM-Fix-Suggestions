@@ -43,9 +43,9 @@ const navItems = [
     icon: Settings,
     isGroup: true,
     subItems: [
-      { href: "/sandbox", label: "Error Sandbox", icon: TestTube2, disabled: true },
-      { href: "/code-converter", label: "Code Converter", icon: GitMerge, disabled: true },
-      { href: "/multiplayer", label: "Collaboration", icon: Users, disabled: true },
+      { href: "/sandbox", label: "Error Sandbox", icon: TestTube2 },
+      { href: "/code-converter", label: "Code Converter", icon: GitMerge },
+      { href: "/multiplayer", label: "Collaboration", icon: Users },
     ],
   },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -137,4 +137,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
