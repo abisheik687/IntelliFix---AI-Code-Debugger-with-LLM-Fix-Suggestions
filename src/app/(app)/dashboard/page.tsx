@@ -1,8 +1,9 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, FileText, Activity, AlertTriangle } from "lucide-react";
+import { BarChart, FileText, Activity, AlertTriangle, Bug } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import { Bar, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Pie, PieChart as RechartsPieChart, Cell } from "recharts";
 import { useAuth } from "@/lib/auth";
