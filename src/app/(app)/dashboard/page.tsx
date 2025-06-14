@@ -3,9 +3,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, FileText, Activity, AlertTriangle, Bug } from "lucide-react";
+import { FileText, Activity, AlertTriangle, Bug, BarChart as BarChartIcon } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
-import { Bar, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Pie, PieChart as RechartsPieChart, Cell } from "recharts";
+import { BarChart, Bar, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Pie, PieChart as RechartsPieChart, Cell } from "recharts";
 import { useAuth } from "@/lib/auth";
 import { useEffect, useState } from "react";
 
@@ -93,7 +93,7 @@ export default function DashboardPage() {
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <BarChart className="mr-2 h-5 w-5 text-primary" />
+              <BarChartIcon className="mr-2 h-5 w-5 text-primary" />
               Error Trends
             </CardTitle>
             <CardDescription>Monthly error reports by type.</CardDescription>
@@ -101,7 +101,7 @@ export default function DashboardPage() {
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <Bar data={chartData} layout="vertical" stackId="a">
+                <BarChart data={chartData} layout="vertical" stackId="a">
                   <CartesianGrid horizontal={false} />
                   <XAxis type="number" />
                   <YAxis dataKey="month" type="category" tickLine={false} tickMargin={10} axisLine={false} />
@@ -109,7 +109,7 @@ export default function DashboardPage() {
                   <ChartLegend content={<ChartLegendContent />} />
                   <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
                   <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-                </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
