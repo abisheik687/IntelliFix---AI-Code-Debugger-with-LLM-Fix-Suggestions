@@ -26,7 +26,7 @@ const ExplainErrorOutputSchema = z.object({
   explanation: z.string().describe('A detailed explanation of the error.'),
   rootCause: z.string().describe('The root cause of the error.'),
   documentationLinks: z
-    .array(z.string().url())
+    .array(z.string())
     .describe('Links to relevant documentation that can help resolve the error.'),
 });
 export type ExplainErrorOutput = z.infer<typeof ExplainErrorOutputSchema>;
